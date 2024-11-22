@@ -23,12 +23,11 @@ library(dplyr)
 library(knitr)
 library(gridExtra)
 library(kableExtra)
+library(car)
+
 
 # Load the dataset and remove rows with missing values
 melb_data_clean <- read.csv("/Users/clearsky21/Housing_Price_Analysis/data/02-analysis_data/cleaned_data.csv")
-
-# Fit the linear regression model using the cleaned dataset
-model <- lm(Price ~ Bedroom2 + Bathroom + Distance + Landsize + Type, data = melb_data_clean)
 ```
 
 # Introduction
@@ -234,35 +233,52 @@ A preliminary linear regression model was fitted using `Price` as the response v
 
 ## Residual Analysis and Diagnostic Plots
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Fit the linear regression model using the cleaned dataset
+model <- lm(Price ~ Type + Method + Distance + Bedroom2 + Bathroom +
+              Landsize + Car + BuildingArea + Propertycount + BuildingAge, data = melb_data_clean)
+
 # Extract residuals and fitted values from the model
 y_value <- resid(model)
 x_value <- fitted(model)
+vif(model)
 
-# Arrange multiple plots in a grid for better readability
-par(mfrow = c(2, 3))
 
 # Plot Residuals vs Fitted Values
 plot(x = x_value, y = y_value, main = "Residual vs Fitted", xlab = "Fitted", ylab = "Residuals")
+abline(h = 0, col = "red", lty = 2)
 
-# Residual plots for each numeric predictor using the cleaned dataset
-plot(x = melb_data_clean$Bedroom2, y = y_value, main = "Residual vs Bedroom2",
-     xlab = "Bedroom2", ylab = "Residual")
+# Residual plots for numeric predictors
+plot(x = melb_data_clean$Bedroom2, y = y_value, main = "Residual vs Bedroom2", xlab = "Bedroom2", ylab = "Residual")
+abline(h = 0, col = "red", lty = 2)
 
-plot(x = melb_data_clean$Bathroom, y = y_value, main = "Residual vs Bathroom",
-     xlab = "Bathroom", ylab = "Residual")
+plot(x = melb_data_clean$Bathroom, y = y_value, main = "Residual vs Bathroom", xlab = "Bathroom", ylab = "Residual")
+abline(h = 0, col = "red", lty = 2)
 
-plot(x = melb_data_clean$Distance, y = y_value, main = "Residual vs Distance",
-     xlab = "Distance", ylab = "Residual")
+plot(x = melb_data_clean$Distance, y = y_value, main = "Residual vs Distance", xlab = "Distance", ylab = "Residual")
+abline(h = 0, col = "red", lty = 2)
 
-plot(x = melb_data_clean$Landsize, y = y_value, main = "Residual vs Landsize",
-     xlab = "Landsize", ylab = "Residual")
+plot(x = melb_data_clean$Landsize, y = y_value, main = "Residual vs Landsize", xlab = "Landsize", ylab = "Residual")
+abline(h = 0, col = "red", lty = 2)
 
-# Residual plot for the categorical predictor "Type" using boxplot
-boxplot(y_value ~ melb_data_clean$Type,
-        main = "Residuals vs Type",
-        xlab = "Type",
-        ylab = "Residuals",
-        col = "lightblue")
+plot(x = melb_data_clean$Car, y = y_value, main = "Residual vs Car", xlab = "Car", ylab = "Residual")
+abline(h = 0, col = "red", lty = 2)
+
+plot(x = melb_data_clean$BuildingArea, y = y_value, main = "Residual vs BuildingArea", xlab = "BuildingArea", ylab = "Residual")
+abline(h = 0, col = "red", lty = 2)
+
+plot(x = melb_data_clean$Propertycount, y = y_value, main = "Residual vs Propertycount", xlab = "Propertycount", ylab = "Residual")
+abline(h = 0, col = "red", lty = 2)
+
+plot(x = melb_data_clean$BuildingAge, y = y_value, main = "Residual vs BuildingAge", xlab = "BuildingAge", ylab = "Residual")
+abline(h = 0, col = "red", lty = 2)
+
+# Residual plot for categorical predictors using boxplots
+boxplot(y_value ~ melb_data_clean$Type, main = "Residuals vs Type", xlab = "Type", ylab = "Residuals", col = "lightblue")
+boxplot(y_value ~ melb_data_clean$Method, main = "Residuals vs Method", xlab = "Method", ylab = "Residuals", col = "lightgreen")
+
+# Reset par to default
+par(mfrow = c(1, 1))
+
 ```
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
@@ -273,17 +289,136 @@ par(mfrow = c(1, 2))
 qqnorm(y_value, main = "Normal Q-Q Plot")
 qqline(y_value)
 
-# Plotting the Response vs Fitted values to check additional condition
+# Plotting the Response vs Fitted values to check additional conditions
 plot(x = x_value, y = melb_data_clean$Price, main = "Response vs Fitted",
      xlab = "Fitted Values", ylab = "Price")
 abline(a = 0, b = 1, lty = 2, col = "red")
+
+# Reset par to single plots for pairwise scatter plot
+par(mfrow = c(1, 1))
+
+# Pairwise scatter plot for numeric predictors including the new ones
+pairs(melb_data_clean[, c("Bedroom2", "Bathroom", "Distance", "Landsize", 
+                          "Car", "BuildingArea", "Propertycount", "BuildingAge")],
+      main = "Pairwise Plots of Numeric Predictors",
+      col = "black")
+
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+# Load necessary library
+# Load necessary library
+library(car)
+
+# Perform Box-Cox transformation for multiple variables
+cat("Box-Cox Transformation for Distance, Landsize, BuildingArea, and Price:\n")
+transform_results <- powerTransform(cbind(Distance, Landsize, BuildingArea, Price) ~ 1, data = melb_data_clean)
+
+# Print a summary of the transformations
+summary(transform_results)
+
 ```
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-# Pairwise scatter plot for numeric predictors
-pairs(melb_data_clean[, c("Bedroom2", "Bathroom", "Distance", "Landsize")],
-      main = "Pairwise Plots of Predictors",
-      col = "lightblue")
+# Apply transformations
+melb_data_clean$crDistance <- (melb_data_clean$Distance)^(1/3)      # Cube root for Distance
+melb_data_clean$lnLandsize <- log(melb_data_clean$Landsize)      # Log transformation for Landsize
+melb_data_clean$crBuildingArea <- (melb_data_clean$BuildingArea)^(1/3) # Cube root for BuildingArea
+melb_data_clean$lnPrice <- log(melb_data_clean$Price)               # Log transformation for Price
+
+# Fit a new model with the transformed variables
+new_model <- lm(lnPrice ~ Type + Method + crDistance + Bedroom2 + Bathroom + Car +
+                  lnLandsize + crBuildingArea + Propertycount + BuildingAge, data = melb_data_clean)
+
+summary(new_model)
+
+# Extract residuals and fitted values from the model
+y_value <- resid(new_model)
+x_value <- fitted(new_model)
+
+# Set up plotting area for residual diagnostics
+par(mfrow = c(2, 2))  # Create a 2x2 plotting grid
+
+# Plot Residuals vs Fitted Values
+plot(x = x_value, y = y_value, main = "Residual vs Fitted", xlab = "Fitted", ylab = "Residuals")
+abline(h = 0, col = "red", lty = 2)
+
+# Residual plots for numeric predictors
+plot(x = melb_data_clean$Bedroom2, y = y_value, main = "Residual vs Bedroom2", xlab = "Bedroom2", ylab = "Residual")
+abline(h = 0, col = "red", lty = 2)
+
+plot(x = melb_data_clean$Bathroom, y = y_value, main = "Residual vs Bathroom", xlab = "Bathroom", ylab = "Residual")
+abline(h = 0, col = "red", lty = 2)
+
+plot(x = melb_data_clean$Distance, y = y_value, main = "Residual vs Distance", xlab = "Distance", ylab = "Residual")
+abline(h = 0, col = "red", lty = 2)
+
+plot(x = melb_data_clean$Landsize, y = y_value, main = "Residual vs Landsize", xlab = "Landsize", ylab = "Residual")
+abline(h = 0, col = "red", lty = 2)
+
+plot(x = melb_data_clean$Car, y = y_value, main = "Residual vs Car", xlab = "Car", ylab = "Residual")
+abline(h = 0, col = "red", lty = 2)
+
+plot(x = melb_data_clean$BuildingArea, y = y_value, main = "Residual vs BuildingArea", xlab = "BuildingArea", ylab = "Residual")
+abline(h = 0, col = "red", lty = 2)
+
+plot(x = melb_data_clean$Propertycount, y = y_value, main = "Residual vs Propertycount", xlab = "Propertycount", ylab = "Residual")
+abline(h = 0, col = "red", lty = 2)
+
+plot(x = melb_data_clean$BuildingAge, y = y_value, main = "Residual vs BuildingAge", xlab = "BuildingAge", ylab = "Residual")
+abline(h = 0, col = "red", lty = 2)
+
+# Residual plot for categorical predictors using boxplots
+par(mfrow = c(1, 2))  # Create a 1x2 plotting grid for boxplots
+
+boxplot(y_value ~ melb_data_clean$Type, main = "Residuals vs Type", xlab = "Type", ylab = "Residuals", col = "lightblue")
+boxplot(y_value ~ melb_data_clean$Method, main = "Residuals vs Method", xlab = "Method", ylab = "Residuals", col = "lightgreen")
+
+# Reset par to default
+par(mfrow = c(1, 1))
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Set plotting back to single plot layout
+par(mfrow = c(1, 2))
+
+# Q-Q plot to assess normality of residuals
+qqnorm(y_value, main = "Normal Q-Q Plot")
+qqline(y_value)
+
+# Plotting the Response vs Fitted values to check additional conditions
+plot(x = x_value, y = melb_data_clean$Price, main = "Response vs Fitted",
+     xlab = "Fitted Values", ylab = "Price")
+abline(a = 0, b = 1, lty = 2, col = "red")
+
+# Reset par to single plots for pairwise scatter plot
+par(mfrow = c(1, 1))
+
+# Pairwise scatter plot for numeric predictors including the new ones
+pairs(melb_data_clean[, c("Bedroom2", "Bathroom", "Distance", "Landsize", 
+                          "Car", "BuildingArea", "Propertycount", "BuildingAge")],
+      main = "Pairwise Plots of Numeric Predictors",
+      col = "black")
+
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Display summary of the model
+summary(new_model)
+
+# Check Variance Inflation Factor (VIF)
+cat("Variance Inflation Factor (VIF):\n")
+vif_values <- vif(new_model)
+print(vif_values)
+
+# Optional: Highlight predictors with high VIF
+high_vif <- vif_values[vif_values > 5] # VIF > 5 indicates multicollinearity
+if (length(high_vif) > 0) {
+  cat("\nPredictors with High VIF (Multicollinearity):\n")
+  print(high_vif)
+} else {
+  cat("\nNo significant multicollinearity detected.\n")
+}
 ```
 
 \newpage
