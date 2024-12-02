@@ -1,4 +1,3 @@
----
 title: "Research Proposal and Data Introduction"
 subtitle: "A Preliminary Multiple Linear Regression Model"
 author: 
@@ -24,22 +23,10 @@ library(knitr)
 library(gridExtra)
 library(kableExtra)
 library(car)
-
-
 # Load the dataset and remove rows with missing values
 melb_data_clean <- read.csv("/Users/clearsky21/Housing_Price_Analysis/data/02-analysis_data/cleaned_data.csv")
 ```
 
-# Introduction
-In the real estate industry, understanding the factors that influence home prices is essential for homeowners, investors, city planners, and policymakers. Accurately predicting these factors is crucial for informed real estate investment decisions. This study delves into the dynamics of Melbourne's housing market, examining how various key factors collectively impact market trends.
-
-This study utilizes Multiple Linear Regression (MLR) to model the relationship between the dependent variable (house price) and multiple independent variables, such as the number of bedrooms, bathrooms, distance to the city center, land size, and house type. MLR is particularly effective because it is assumed that these predictors can be linearly related to house prices, allowing for the quantification of the separate impact of each predictor while controlling for the influence of others. This provides a clear and structured method to understand how various factors contribute to property values.
-
-Several peer-reviewed studies are referenced to explore factors influencing house prices. He and He (2021) utilized linear and logistic regression to assess the impact of Melbourne's location and property type on house prices, concluding that these factors significantly affect market value. This aligns with the current study's objectives, which similarly considers variables such as the number of rooms and building age. Yusof and Ismail (2012) employed multiple regression to explore how intrinsic house characteristics, such as the number of bedrooms and bathrooms, influence price variations, highlighting their significant impact on house prices. This provides a method to quantify real estate market behaviors effectively. Chen and Hao (2008) examined the effect of distance from the CBD on house prices in Shanghai through hedonic analysis, underscoring the critical role of location in property valuation. While these studies vary in geographic focus, their methodologies and conclusions offer important insights for understanding Melbourne's housing market. Collectively, they illustrate the utility of multiple linear regression in isolating the effects of various property characteristics on market values, thus providing a robust framework for academic and practical applications in real estate analysis.
-
-Ultimately, with the model developed, we are able to not only explain the factors that shape current house prices, but also predict future changes in house prices. This predictive ability is a valuable tool for real estate investors and policy makers, enabling them to make more informed decisions in a market full of uncertainty.
-
-\newpage
 # Data Description
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
@@ -68,25 +55,20 @@ summary_numeric <- melb_data_clean %>%
     Landsize_Median = median(Landsize, na.rm = TRUE),
     Landsize_Max = max(Landsize, na.rm = TRUE)
   )
-
 # Transpose summary statistics to make it readable
 summary_numeric_t <- as.data.frame(t(summary_numeric))
 colnames(summary_numeric_t) <- "Value"
-
 # Use knitr::kable to print the summary statistics
 kable(
   summary_numeric_t,
   caption = "Summary Statistics for Numeric Variables",
   digits = 2
 )
-
 # Frequency table for categorical variable (House Type)
 house_type_freq <- table(melb_data_clean$Type)
-
 # Convert the frequency table to a data frame to use kable
 house_type_freq_df <- as.data.frame(house_type_freq)
 colnames(house_type_freq_df) <- c("House Type", "Frequency")
-
 # Use knitr::kable to print the frequency table for House Type
 kable(
   house_type_freq_df,
@@ -107,7 +89,6 @@ p1 <- ggplot(melb_data_clean, aes(x = Price)) +
     axis.text = element_text(size = 10),
     plot.margin = margin(10, 10, 10, 10)
   )
-
 # Histogram for Bedrooms
 p2 <- ggplot(melb_data_clean, aes(x = Bedroom2)) +
   geom_histogram(bins = 20, fill = 'green', color = 'black') +
@@ -119,7 +100,6 @@ p2 <- ggplot(melb_data_clean, aes(x = Bedroom2)) +
     axis.text = element_text(size = 10),
     plot.margin = margin(10, 10, 10, 10)
   )
-
 # Histogram for Bathrooms
 p3 <- ggplot(melb_data_clean, aes(x = Bathroom)) +
   geom_histogram(bins = 30, fill = 'pink', color = 'black') +
@@ -131,7 +111,6 @@ p3 <- ggplot(melb_data_clean, aes(x = Bathroom)) +
     axis.text = element_text(size = 10),
     plot.margin = margin(10, 10, 10, 10)
   )
-
 # Histogram for Distance to City Center
 p4 <- ggplot(melb_data_clean, aes(x = Distance)) +
   geom_histogram(bins = 20, fill = 'purple', color = 'black') +
@@ -143,7 +122,6 @@ p4 <- ggplot(melb_data_clean, aes(x = Distance)) +
     axis.text = element_text(size = 10),
     plot.margin = margin(10, 10, 10, 10)
   )
-
 # Histogram for Land Size
 p5 <- ggplot(melb_data_clean, aes(x = Landsize)) +
   geom_histogram(bins = 30, fill = 'cyan', color = 'black') +
@@ -155,9 +133,7 @@ p5 <- ggplot(melb_data_clean, aes(x = Landsize)) +
     axis.text = element_text(size = 10),
     plot.margin = margin(10, 10, 10, 10)
   )
-
 # Scatter plots with adjusted theme settings
-
 # Scatter plot for Price vs Bedrooms
 p6 <- ggplot(melb_data_clean, aes(x = Bedroom2, y = Price)) +
   geom_point(color = 'green') +
@@ -169,7 +145,6 @@ p6 <- ggplot(melb_data_clean, aes(x = Bedroom2, y = Price)) +
     axis.text = element_text(size = 10),
     plot.margin = margin(10, 10, 10, 10)
   )
-
 # Scatter plot for Price vs Bathrooms
 p7 <- ggplot(melb_data_clean, aes(x = Bathroom, y = Price)) +
   geom_point(color = 'pink') +
@@ -181,7 +156,6 @@ p7 <- ggplot(melb_data_clean, aes(x = Bathroom, y = Price)) +
     axis.text = element_text(size = 10),
     plot.margin = margin(10, 10, 10, 10)
   )
-
 # Scatter plot for Price vs Distance to City Center
 p8 <- ggplot(melb_data_clean, aes(x = Distance, y = Price)) +
   geom_point(color = 'purple') +
@@ -193,7 +167,6 @@ p8 <- ggplot(melb_data_clean, aes(x = Distance, y = Price)) +
     axis.text = element_text(size = 10),
     plot.margin = margin(10, 10, 10, 10)
   )
-
 # Scatter plot for Price vs Land Size
 p9 <- ggplot(melb_data_clean, aes(x = Landsize, y = Price)) +
   geom_point(color = 'cyan') +
@@ -205,31 +178,12 @@ p9 <- ggplot(melb_data_clean, aes(x = Landsize, y = Price)) +
     axis.text = element_text(size = 10),
     plot.margin = margin(10, 10, 10, 10)
   )
-
 # Arrange the plots using gridExtra::grid.arrange() to organize them in a grid
-
 # Arrange histogram plots
 grid.arrange(p1, p2, p3, p4, p5, ncol = 2)
-
 # Arrange scatter plots
 grid.arrange(p6, p7, p8, p9, ncol = 2)
-
 ```
-The dataset used in this analysis is derived from Melbourne Housing Snapshot on Kaggle (Becker, 2018). It was originally collected by Tony Pino from publicly available data on the real estate website Domain.com.au (Pino, 2018) and collated to contain 13,580 observations and 21 variables related to Melbourne housing characteristics.
-
-## Why Linear Regression?
-Linear regression is appropriate for this analysis, since the response variable is continuous, with predictors comprising both numeric and categorical variables. Each observation is assumed to be independent, and preliminary visual checks indicate that the response variable approximates a normal distribution, meeting the assumptions for linear regression.
-
-## Histogram and Scatter Plots Description
-The histograms illustrate the distribution of each predictor and the response variable. House prices exhibit a right-skewed distribution, indicating that most properties are priced below AUD 2.5 million, with a few high-end outliers. The predictors such as the number of bedrooms and bathrooms follow relatively normal distributions, though some extreme values are present. Distance from the city center is skewed towards properties located within 10-20 km from the Central Business District (CBD). The scatter plots demonstrate a generally positive relationship between house price and predictors like the number of bedrooms, bathrooms, and land size, while distance shows a negative correlation.
-
-# Ethics discussion
-Based on the ethical considerations outlined in the first ethics module, Tony Pino's Melbourne housing dataset on Kaggle appears to be trustworthy. As detailed in the  description section of the dataset, the data is crawled from public results published weekly by Domain.com.au, which indicates that its source is transparent. The dataset was collected from a reliable source with detailed descriptions, demonstrating that it has been rigorously vetted to meet ethical guidelines for data accuracy and source transparency. In addition, the anonymization of the data addresses privacy concerns, making it suitable for use in housing market analysis without compromising individual privacy. Additionally, the dataset is used by a broad community on Kaggle, which helps to ensure that the dataset has been informally peer-reviewed through user feedback and applications, thus strengthening its reliability. The process of updating the dataset on a regular basis by reputable real estate websites also enhances its relevance and timeliness, which is a key factor in its applicability to dynamic market analyses such as real estate trends and pricing assessments.
-
-
-# Preliminary Result
-A preliminary linear regression model was fitted using `Price` as the response variable, with five predictors: `Bedroom2`, `Bathroom`, `Distance`, `Landsize`, and `Type`. The model aimed to determine significant factors influencing housing prices in Melbourne.
-
 
 ## Residual Analysis and Diagnostic Plots
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
@@ -237,180 +191,134 @@ A preliminary linear regression model was fitted using `Price` as the response v
 model <- lm(Price ~ Type + Method + Distance + Bedroom2 + Bathroom +
               Landsize + Car + BuildingArea + Propertycount + BuildingAge, data = melb_data_clean)
 
+summary(model)
+
 # Extract residuals and fitted values from the model
 y_value <- resid(model)
 x_value <- fitted(model)
-vif(model)
-
-
 # Plot Residuals vs Fitted Values
 plot(x = x_value, y = y_value, main = "Residual vs Fitted", xlab = "Fitted", ylab = "Residuals")
 abline(h = 0, col = "red", lty = 2)
-
 # Residual plots for numeric predictors
 plot(x = melb_data_clean$Bedroom2, y = y_value, main = "Residual vs Bedroom2", xlab = "Bedroom2", ylab = "Residual")
 abline(h = 0, col = "red", lty = 2)
-
 plot(x = melb_data_clean$Bathroom, y = y_value, main = "Residual vs Bathroom", xlab = "Bathroom", ylab = "Residual")
 abline(h = 0, col = "red", lty = 2)
-
 plot(x = melb_data_clean$Distance, y = y_value, main = "Residual vs Distance", xlab = "Distance", ylab = "Residual")
 abline(h = 0, col = "red", lty = 2)
-
 plot(x = melb_data_clean$Landsize, y = y_value, main = "Residual vs Landsize", xlab = "Landsize", ylab = "Residual")
 abline(h = 0, col = "red", lty = 2)
-
 plot(x = melb_data_clean$Car, y = y_value, main = "Residual vs Car", xlab = "Car", ylab = "Residual")
 abline(h = 0, col = "red", lty = 2)
-
 plot(x = melb_data_clean$BuildingArea, y = y_value, main = "Residual vs BuildingArea", xlab = "BuildingArea", ylab = "Residual")
 abline(h = 0, col = "red", lty = 2)
-
 plot(x = melb_data_clean$Propertycount, y = y_value, main = "Residual vs Propertycount", xlab = "Propertycount", ylab = "Residual")
 abline(h = 0, col = "red", lty = 2)
-
 plot(x = melb_data_clean$BuildingAge, y = y_value, main = "Residual vs BuildingAge", xlab = "BuildingAge", ylab = "Residual")
 abline(h = 0, col = "red", lty = 2)
-
 # Residual plot for categorical predictors using boxplots
 boxplot(y_value ~ melb_data_clean$Type, main = "Residuals vs Type", xlab = "Type", ylab = "Residuals", col = "lightblue")
 boxplot(y_value ~ melb_data_clean$Method, main = "Residuals vs Method", xlab = "Method", ylab = "Residuals", col = "lightgreen")
-
 # Reset par to default
 par(mfrow = c(1, 1))
-
 ```
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 # Set plotting back to single plot layout
 par(mfrow = c(1, 2))
-
 # Q-Q plot to assess normality of residuals
 qqnorm(y_value, main = "Normal Q-Q Plot")
 qqline(y_value)
-
 # Plotting the Response vs Fitted values to check additional conditions
 plot(x = x_value, y = melb_data_clean$Price, main = "Response vs Fitted",
      xlab = "Fitted Values", ylab = "Price")
 abline(a = 0, b = 1, lty = 2, col = "red")
-
 # Reset par to single plots for pairwise scatter plot
 par(mfrow = c(1, 1))
-
 # Pairwise scatter plot for numeric predictors including the new ones
 pairs(melb_data_clean[, c("Bedroom2", "Bathroom", "Distance", "Landsize", 
                           "Car", "BuildingArea", "Propertycount", "BuildingAge")],
       main = "Pairwise Plots of Numeric Predictors",
       col = "black")
-
 ```
-
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 # Load necessary library
 # Load necessary library
 library(car)
-
 # Perform Box-Cox transformation for multiple variables
 cat("Box-Cox Transformation for Distance, Landsize, BuildingArea, and Price:\n")
 transform_results <- powerTransform(cbind(Distance, Landsize, BuildingArea, Price) ~ 1, data = melb_data_clean)
-
 # Print a summary of the transformations
 summary(transform_results)
-
 ```
-
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 # Apply transformations
 melb_data_clean$crDistance <- (melb_data_clean$Distance)^(1/3)      # Cube root for Distance
 melb_data_clean$lnLandsize <- log(melb_data_clean$Landsize)      # Log transformation for Landsize
 melb_data_clean$crBuildingArea <- (melb_data_clean$BuildingArea)^(1/3) # Cube root for BuildingArea
 melb_data_clean$lnPrice <- log(melb_data_clean$Price)               # Log transformation for Price
-
 # Fit a new model with the transformed variables
-new_model <- lm(lnPrice ~ Type + Method + crDistance + Bedroom2 + Bathroom + Car +
-                  lnLandsize + crBuildingArea + Propertycount + BuildingAge, data = melb_data_clean)
-
+new_model <- lm(lnPrice ~ Type + crDistance + Bedroom2 + Bathroom + Car +
+                  lnLandsize + + Propertycount + crBuildingArea + BuildingAge, data = melb_data_clean)
 summary(new_model)
-
 # Extract residuals and fitted values from the model
 y_value <- resid(new_model)
 x_value <- fitted(new_model)
-
 # Set up plotting area for residual diagnostics
 par(mfrow = c(2, 2))  # Create a 2x2 plotting grid
-
 # Plot Residuals vs Fitted Values
 plot(x = x_value, y = y_value, main = "Residual vs Fitted", xlab = "Fitted", ylab = "Residuals")
 abline(h = 0, col = "red", lty = 2)
-
 # Residual plots for numeric predictors
 plot(x = melb_data_clean$Bedroom2, y = y_value, main = "Residual vs Bedroom2", xlab = "Bedroom2", ylab = "Residual")
 abline(h = 0, col = "red", lty = 2)
-
 plot(x = melb_data_clean$Bathroom, y = y_value, main = "Residual vs Bathroom", xlab = "Bathroom", ylab = "Residual")
 abline(h = 0, col = "red", lty = 2)
-
 plot(x = melb_data_clean$Distance, y = y_value, main = "Residual vs Distance", xlab = "Distance", ylab = "Residual")
 abline(h = 0, col = "red", lty = 2)
-
 plot(x = melb_data_clean$Landsize, y = y_value, main = "Residual vs Landsize", xlab = "Landsize", ylab = "Residual")
 abline(h = 0, col = "red", lty = 2)
-
 plot(x = melb_data_clean$Car, y = y_value, main = "Residual vs Car", xlab = "Car", ylab = "Residual")
 abline(h = 0, col = "red", lty = 2)
-
 plot(x = melb_data_clean$BuildingArea, y = y_value, main = "Residual vs BuildingArea", xlab = "BuildingArea", ylab = "Residual")
 abline(h = 0, col = "red", lty = 2)
-
 plot(x = melb_data_clean$Propertycount, y = y_value, main = "Residual vs Propertycount", xlab = "Propertycount", ylab = "Residual")
 abline(h = 0, col = "red", lty = 2)
-
 plot(x = melb_data_clean$BuildingAge, y = y_value, main = "Residual vs BuildingAge", xlab = "BuildingAge", ylab = "Residual")
 abline(h = 0, col = "red", lty = 2)
-
 # Residual plot for categorical predictors using boxplots
 par(mfrow = c(1, 2))  # Create a 1x2 plotting grid for boxplots
-
 boxplot(y_value ~ melb_data_clean$Type, main = "Residuals vs Type", xlab = "Type", ylab = "Residuals", col = "lightblue")
 boxplot(y_value ~ melb_data_clean$Method, main = "Residuals vs Method", xlab = "Method", ylab = "Residuals", col = "lightgreen")
-
 # Reset par to default
 par(mfrow = c(1, 1))
 ```
-
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 # Set plotting back to single plot layout
 par(mfrow = c(1, 2))
-
 # Q-Q plot to assess normality of residuals
 qqnorm(y_value, main = "Normal Q-Q Plot")
 qqline(y_value)
-
 # Plotting the Response vs Fitted values to check additional conditions
 plot(x = x_value, y = melb_data_clean$Price, main = "Response vs Fitted",
      xlab = "Fitted Values", ylab = "Price")
 abline(a = 0, b = 1, lty = 2, col = "red")
-
 # Reset par to single plots for pairwise scatter plot
 par(mfrow = c(1, 1))
-
 # Pairwise scatter plot for numeric predictors including the new ones
 pairs(melb_data_clean[, c("Bedroom2", "Bathroom", "Distance", "Landsize", 
                           "Car", "BuildingArea", "Propertycount", "BuildingAge")],
       main = "Pairwise Plots of Numeric Predictors",
       col = "black")
-
 ```
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 # Display summary of the model
 summary(new_model)
-
 # Check Variance Inflation Factor (VIF)
 cat("Variance Inflation Factor (VIF):\n")
 vif_values <- vif(new_model)
 print(vif_values)
-
 # Optional: Highlight predictors with high VIF
 high_vif <- vif_values[vif_values > 5] # VIF > 5 indicates multicollinearity
 if (length(high_vif) > 0) {
@@ -422,93 +330,3 @@ if (length(high_vif) > 0) {
 ```
 
 \newpage
-
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
-# Create a detailed data frame for assumptions and conditions summary
-assumptions_conditions_summary <- data.frame(
-  Aspect = c(
-    "Linearity",
-    "Uncorrelated Errors",
-    "Constant Error Variance",
-    "Normal Errors",
-    "Condition 1: Conditional Mean Response",
-    "Condition 2: Conditional Mean Predictors"
-  ),
-  Description = c(
-    "The Residual vs Fitted plot shows a noticeable pattern rather than random scatter. Residuals fan out at higher fitted values, which indicates non-linearity. Therefore, the linearity assumption is violated, implying that the model might not be properly capturing all the complexity in the relationship between predictors and response.",
-    "In the Residuals vs Predictors plots:
-There are noticeable patterns in the residuals, especially in `Distance` and `Landsize`, which show a widening spread and clustering in residuals. This suggests some correlation or dependence among residuals, implying that the errors are not independent.
-Additionally, the Residuals vs Type plot (boxplot) shows variations in the residual distributions for different categories (h, t, u). While there is some similarity, differences in variance imply potential dependence.",
-    "The funnel shape (wider spread as fitted values increase) indicates  where the variance of residuals increases with the fitted values. This means the error variance is not constant. Such non-constant variance often suggests that the model does not perform well for different ranges of fitted values, and it violates the constant error variance assumption.",
-    "The Q-Q plot deviates significantly from the diagonal line, especially in the tails. This implies non-normal distribution of residuals, particularly for extreme values, which affects the validity of statistical inferences.",
-    "The Response vs Fitted plot should ideally show points along the diagonal line, indicating a good fit. However, the provided plot shows significant deviations, especially for higher fitted values, meaning the model does not adequately capture the linear relationship between the predictors and the response. Thus, the conditional mean response condition is violated, suggesting underfitting, particularly for high-priced properties.",
-    "The Pairwise Scatter Plots of predictors should show no clear non-linear patterns if the predictors are adequately modeled. However, clustering is evident, especially between Bedroom2 and Bathroom, and there are potential non-linear relationships among some predictors. This indicates possible multicollinearity and violates the conditional mean predictor condition."
-  )
-)
-
-# Create the table with horizontal lines for better readability using kableExtra
-kable(
-  assumptions_conditions_summary,
-  caption = "Summary of Assumptions and Conditions for the Preliminary Linear Model",
-  col.names = c("Aspect", "Description"),
-  align = "l"
-) %>%
-  kable_styling(full_width = FALSE, position = "center", font_size = 10) %>%
-  column_spec(2, width = "25em") %>% # Adjust the width of the description column
-  row_spec(0, bold = TRUE, underline = TRUE) %>% # Bold and underline header row
-  row_spec(1:(nrow(assumptions_conditions_summary) - 1), hline_after = TRUE) # Horizontal lines only after necessary rows
-
-```
-
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
-# Load necessary libraries
-library(knitr)
-library(kableExtra)
-
-# Extract the summary of the linear regression model
-model_summary <- summary(model)
-
-# Create a data frame with the coefficients, standard errors, t-values, and p-values
-coefficients_df <- as.data.frame(model_summary$coefficients)
-coefficients_df <- tibble::rownames_to_column(coefficients_df, "Predictor")
-
-# Rename the columns for better readability
-colnames(coefficients_df) <- c("Predictor", "Estimate", "Std. Error", "t-value", "p-value")
-
-# Update p-values for better display
-coefficients_df$`p-value` <- ifelse(coefficients_df$`p-value` < 0.001, "<0.001", round(coefficients_df$`p-value`, 3))
-
-# Create the table using knitr::kable with improved formatting and smaller title size
-kable(
-  coefficients_df,
-  caption = "Summary of Preliminary Model Coefficients",
-  align = "c",
-  digits = 3
-) %>%
-  kable_styling(
-    full_width = FALSE,
-    position = "center",
-    font_size = 12,
-    bootstrap_options = c("striped", "hover", "condensed", "responsive")
-  ) %>%
-  column_spec(1, bold = TRUE, width = "6em") %>% # Make predictor names bold, adjust column width
-  column_spec(2:5, width = "8em") %>% # Adjust column widths for better readability
-  add_header_above(c(" " = 1, "Coefficients Summary" = 4), bold = TRUE, line = TRUE, font_size = 10) %>% # Use a shorter header title
-  row_spec(0, background = "#D3D3D3", bold = TRUE, color = "black") %>% # Style the header row
-  row_spec(1:nrow(coefficients_df), background = c("#F9F9F9", "#FFFFFF")) %>% # Add alternating row colors
-  scroll_box(height = "500px") %>% # Add scrolling to make sure all rows are visible
-  footnote(general = "Significance codes: *** p<0.001, ** p<0.01, * p<0.05", general_title = "Note: ", footnote_as_chunk = TRUE)
-
-```
-
-
-## Discussion of Model Estimates
-The preliminary linear regression model indicates that Distance has a significant negative impact on housing prices. This suggests that properties closer to the city center are more valuable, aligning with traditional real estate principles that emphasize central location advantages. Additionally, Type plays a significant role, with houses being valued higher compared to units or townhouses. This is likely because houses offer more land and space, making them more desirable. These results suggest that proximity to urban amenities and property type are key factors in determining property values in Melbourne.
-
-## Comparison with Literature
-The findings from the preliminary model are consistent with several points in the literature but also show notable differences. Chen and Hao (2008) identified that in Shanghai, property prices decrease approximately 5% per kilometer away from the CBD, highlighting the importance of location in property valuation, which parallels the negative effect of distance observed in this model . He and He (2021) also found that location and property type are influential predictors of housing prices in Melbourne, similar to the effects seen in this study, confirming the robustness of these factors in different urban settings.
-However, unlike the typically strong linear fits found in Yusof and Ismail (2012), the residual plots of the current model reveal non-linearity and non-constant error variance. This suggests that a simple linear model might not sufficiently capture the complexities of Melbourne's housing market, whereas the literature often reports better-fitting models using additional adjustments or non-linear relationships . These discrepancies highlight the need for more sophisticated modeling techniques, such as interaction terms or non-linear approaches, to improve the current model's accuracy.
-
-\appendix
-
-# Reference
