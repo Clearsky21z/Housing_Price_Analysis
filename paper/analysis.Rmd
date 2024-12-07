@@ -1,0 +1,871 @@
+---
+title: "Research Proposal and Data Introduction"
+subtitle: "A Preliminary Multiple Linear Regression Model"
+author: 
+  - Alyna Qi 
+  - Heidi Wang 
+  - John Zhang
+output:
+  pdf_document:
+    toc: true
+    number_sections: true
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+bibliography: references.bib
+---
+
+\newpage
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Load necessary library
+library(ggplot2)
+library(tidyverse)
+library(dplyr)
+library(knitr)
+library(gridExtra)
+library(kableExtra)
+library(car)
+library(caret)
+# Load the dataset and remove rows with missing values
+melb_data_clean <- read.csv("/Users/clearsky21/Housing_Price_Analysis/data/02-analysis_data/cleaned_data.csv")
+```
+
+# Data Description
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(dplyr)
+
+# Summary statistics for numeric variables
+summary_numeric <- melb_data_clean %>%
+  dplyr::select(Price, Bedroom2, Bathroom, Distance, Landsize) %>%
+  summarise(
+    Price_Min = min(Price, na.rm = TRUE),
+    Price_Mean = mean(Price, na.rm = TRUE),
+    Price_Median = median(Price, na.rm = TRUE),
+    Price_Max = max(Price, na.rm = TRUE),
+    Bedroom2_Min = min(Bedroom2, na.rm = TRUE),
+    Bedroom2_Mean = mean(Bedroom2, na.rm = TRUE),
+    Bedroom2_Median = median(Bedroom2, na.rm = TRUE),
+    Bedroom2_Max = max(Bedroom2, na.rm = TRUE),
+    Bathroom_Min = min(Bathroom, na.rm = TRUE),
+    Bathroom_Mean = mean(Bathroom, na.rm = TRUE),
+    Bathroom_Median = median(Bathroom, na.rm = TRUE),
+    Bathroom_Max = max(Bathroom, na.rm = TRUE),
+    Distance_Min = min(Distance, na.rm = TRUE),
+    Distance_Mean = mean(Distance, na.rm = TRUE),
+    Distance_Median = median(Distance, na.rm = TRUE),
+    Distance_Max = max(Distance, na.rm = TRUE),
+    Landsize_Min = min(Landsize, na.rm = TRUE),
+    Landsize_Mean = mean(Landsize, na.rm = TRUE),
+    Landsize_Median = median(Landsize, na.rm = TRUE),
+    Landsize_Max = max(Landsize, na.rm = TRUE)
+  )
+
+# Transpose summary statistics to make it readable
+summary_numeric_t <- as.data.frame(t(summary_numeric))
+colnames(summary_numeric_t) <- "Value"
+
+# Print the summary statistics using knitr::kable
+knitr::kable(
+  summary_numeric_t,
+  caption = "Summary Statistics for Numeric Variables",
+  digits = 2
+)
+
+# Frequency table for categorical variable (House Type)
+house_type_freq <- table(melb_data_clean$Type)
+house_type_freq_df <- as.data.frame(house_type_freq)
+colnames(house_type_freq_df) <- c("House Type", "Frequency")
+
+# Print the frequency table for House Type
+knitr::kable(
+  house_type_freq_df,
+  caption = "Frequency Table for House Type",
+  align = 'c'
+)
+
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Histogram for House Price
+p1 <- ggplot(melb_data_clean, aes(x = Price)) +
+  geom_histogram(bins = 30, fill = 'blue', color = 'black') +
+  labs(title = 'Distribution of House Prices', x = 'Price (AUD)', y = 'Frequency') +
+  theme(
+    plot.title = element_text(size = 12, face = "bold", hjust = 0.5),
+    axis.title.x = element_text(size = 12),
+    axis.title.y = element_text(size = 12),
+    axis.text = element_text(size = 10),
+    plot.margin = margin(10, 10, 10, 10)
+  )
+# Histogram for Bedrooms
+p2 <- ggplot(melb_data_clean, aes(x = Bedroom2)) +
+  geom_histogram(bins = 20, fill = 'green', color = 'black') +
+  labs(title = 'Distribution of Bedrooms', x = 'Number of Bedrooms', y = 'Frequency') +
+  theme(
+    plot.title = element_text(size = 14, face = "bold", hjust = 0.5),
+    axis.title.x = element_text(size = 12),
+    axis.title.y = element_text(size = 12),
+    axis.text = element_text(size = 10),
+    plot.margin = margin(10, 10, 10, 10)
+  )
+# Histogram for Bathrooms
+p3 <- ggplot(melb_data_clean, aes(x = Bathroom)) +
+  geom_histogram(bins = 30, fill = 'pink', color = 'black') +
+  labs(title = 'Distribution of Bathrooms', x = 'Number of Bathrooms', y = 'Frequency') +
+  theme(
+    plot.title = element_text(size = 14, face = "bold", hjust = 0.5),
+    axis.title.x = element_text(size = 12),
+    axis.title.y = element_text(size = 12),
+    axis.text = element_text(size = 10),
+    plot.margin = margin(10, 10, 10, 10)
+  )
+# Histogram for Distance to City Center
+p4 <- ggplot(melb_data_clean, aes(x = Distance)) +
+  geom_histogram(bins = 20, fill = 'purple', color = 'black') +
+  labs(title = 'Distribution of Distance to City Center', x = 'Distance (km)', y = 'Frequency') +
+  theme(
+    plot.title = element_text(size = 10, face = "bold", hjust = 0.5),
+    axis.title.x = element_text(size = 12),
+    axis.title.y = element_text(size = 12),
+    axis.text = element_text(size = 10),
+    plot.margin = margin(10, 10, 10, 10)
+  )
+# Histogram for Land Size
+p5 <- ggplot(melb_data_clean, aes(x = Landsize)) +
+  geom_histogram(bins = 30, fill = 'cyan', color = 'black') +
+  labs(title = 'Distribution of Land Size', x = 'Land Size (sqm)', y = 'Frequency') +
+  theme(
+    plot.title = element_text(size = 14, face = "bold", hjust = 0.5),
+    axis.title.x = element_text(size = 12),
+    axis.title.y = element_text(size = 12),
+    axis.text = element_text(size = 10),
+    plot.margin = margin(10, 10, 10, 10)
+  )
+# Scatter plots with adjusted theme settings
+# Scatter plot for Price vs Bedrooms
+p6 <- ggplot(melb_data_clean, aes(x = Bedroom2, y = Price)) +
+  geom_point(color = 'green') +
+  labs(title = 'House Price vs Bedrooms', x = 'Number of Bedrooms', y = 'Price (AUD)') +
+  theme(
+    plot.title = element_text(size = 14, face = "bold", hjust = 0.5),
+    axis.title.x = element_text(size = 12),
+    axis.title.y = element_text(size = 12),
+    axis.text = element_text(size = 10),
+    plot.margin = margin(10, 10, 10, 10)
+  )
+# Scatter plot for Price vs Bathrooms
+p7 <- ggplot(melb_data_clean, aes(x = Bathroom, y = Price)) +
+  geom_point(color = 'pink') +
+  labs(title = 'House Price vs Bathrooms', x = 'Number of Bathrooms', y = 'Price (AUD)') +
+  theme(
+    plot.title = element_text(size = 14, face = "bold", hjust = 0.5),
+    axis.title.x = element_text(size = 12),
+    axis.title.y = element_text(size = 12),
+    axis.text = element_text(size = 10),
+    plot.margin = margin(10, 10, 10, 10)
+  )
+# Scatter plot for Price vs Distance to City Center
+p8 <- ggplot(melb_data_clean, aes(x = Distance, y = Price)) +
+  geom_point(color = 'purple') +
+  labs(title = 'House Price vs Distance to City Center', x = 'Distance (km)', y = 'Price (AUD)') +
+  theme(
+    plot.title = element_text(size = 9, face = "bold", hjust = 0.5),
+    axis.title.x = element_text(size = 12),
+    axis.title.y = element_text(size = 12),
+    axis.text = element_text(size = 10),
+    plot.margin = margin(10, 10, 10, 10)
+  )
+# Scatter plot for Price vs Land Size
+p9 <- ggplot(melb_data_clean, aes(x = Landsize, y = Price)) +
+  geom_point(color = 'cyan') +
+  labs(title = 'House Price vs Land Size', x = 'Land Size (sqm)', y = 'Price (AUD)') +
+  theme(
+    plot.title = element_text(size = 13, face = "bold", hjust = 0.5),
+    axis.title.x = element_text(size = 12),
+    axis.title.y = element_text(size = 12),
+    axis.text = element_text(size = 10),
+    plot.margin = margin(10, 10, 10, 10)
+  )
+# Arrange the plots using gridExtra::grid.arrange() to organize them in a grid
+# Arrange histogram plots
+grid.arrange(p1, p2, p3, p4, p5, ncol = 2)
+# Arrange scatter plots
+grid.arrange(p6, p7, p8, p9, ncol = 2)
+```
+
+# Train and Test Split
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Load dataset and remove rows with missing values
+set.seed(42)  # Ensures reproducibility
+melb_data_clean <- read.csv("/Users/clearsky21/Housing_Price_Analysis/data/02-analysis_data/cleaned_data.csv") %>%
+  na.omit()
+
+# Split dataset into training (80%) and testing (20%)
+train_index <- createDataPartition(melb_data_clean$Price, p = 0.8, list = FALSE)
+train_data <- melb_data_clean[train_index, ]
+test_data <- melb_data_clean[-train_index, ]
+```
+
+$$
+\text{Housing Price} = \beta_0
++ \beta_1 \cdot \text{Type}
++ \beta_2 \cdot \text{Method}
++ \beta_3 \cdot \text{Distance}\\
++ \beta_4 \cdot \text{Bedroom} 
++ \beta_5 \cdot \text{Bathroom}
++ \beta_6 \cdot \text{Landsize}
++ \beta_7 \cdot \text{Car} \\
++ \beta_8 \cdot \text{BuildingArea}
++ \beta_9 \cdot \text{Propertycount}
++ \beta_{10} \cdot \text{BuildingAge} 
++ \epsilon
+$$
+
+
+
+# Model 1
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Fit the linear regression model using the cleaned dataset
+model_1 <- lm(Price ~ Type + Method + Distance + Bedroom2 + Bathroom +
+                   Landsize + Car + BuildingArea + Propertycount + BuildingAge, data = train_data)
+summary(model_1)
+
+
+# Extract residuals and fitted values from the model
+y_value <- resid(model_1)
+x_value <- fitted(model_1)
+# Plot Residuals vs Fitted Values
+plot(x = x_value, y = y_value, main = "Residual vs Fitted", xlab = "Fitted", ylab = "Residuals")
+abline(h = 0, col = "red", lty = 2)
+# Residual plots for numeric predictors
+plot(x = train_data$Bedroom2, y = y_value, main = "Residual vs Bedroom2", xlab = "Bedroom2", ylab = "Residual")
+abline(h = 0, col = "red", lty = 2)
+plot(x = train_data$Bathroom, y = y_value, main = "Residual vs Bathroom", xlab = "Bathroom", ylab = "Residual")
+abline(h = 0, col = "red", lty = 2)
+plot(x = train_data$Distance, y = y_value, main = "Residual vs Distance", xlab = "Distance", ylab = "Residual")
+abline(h = 0, col = "red", lty = 2)
+plot(x = train_data$Landsize, y = y_value, main = "Residual vs Landsize", xlab = "Landsize", ylab = "Residual")
+abline(h = 0, col = "red", lty = 2)
+plot(x = train_data$Car, y = y_value, main = "Residual vs Car", xlab = "Car", ylab = "Residual")
+abline(h = 0, col = "red", lty = 2)
+plot(x = train_data$BuildingArea, y = y_value, main = "Residual vs BuildingArea", xlab = "BuildingArea", ylab = "Residual")
+abline(h = 0, col = "red", lty = 2)
+plot(x = train_data$Propertycount, y = y_value, main = "Residual vs Propertycount", xlab = "Propertycount", ylab = "Residual")
+abline(h = 0, col = "red", lty = 2)
+plot(x = train_data$BuildingAge, y = y_value, main = "Residual vs BuildingAge", xlab = "BuildingAge", ylab = "Residual")
+abline(h = 0, col = "red", lty = 2)
+# Residual plot for categorical predictors using boxplots
+boxplot(y_value ~ train_data$Type, main = "Residuals vs Type", xlab = "Type", ylab = "Residuals", col = "lightblue")
+boxplot(y_value ~ train_data$Method, main = "Residuals vs Method", xlab = "Method", ylab = "Residuals", col = "lightgreen")
+# Reset par to default
+par(mfrow = c(1, 1))
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Set plotting back to single plot layout
+par(mfrow = c(1, 2))
+# Q-Q plot to assess normality of residuals
+qqnorm(y_value, main = "Normal Q-Q Plot")
+qqline(y_value)
+# Plotting the Response vs Fitted values to check additional conditions
+plot(x = x_value, y = train_data$Price, main = "Response vs Fitted",
+     xlab = "Fitted Values", ylab = "Price")
+abline(a = 0, b = 1, lty = 2, col = "red")
+# Reset par to single plots for pairwise scatter plot
+par(mfrow = c(1, 1))
+# Pairwise scatter plot for numeric predictors including the new ones
+pairs(train_data[, c("Bedroom2", "Bathroom", "Distance", "Landsize", 
+                          "Car", "BuildingArea", "Propertycount", "BuildingAge")],
+      main = "Pairwise Plots of Numeric Predictors",
+      col = "black")
+```
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+# Load necessary library
+library(car)
+train_data <- train_data %>%
+  mutate(
+    Bedroom2 = ifelse(Bedroom2 <= 0, Bedroom2 + 0.0001, Bedroom2),
+    Car = ifelse(Car <= 0, Car + 0.0001, Car),
+  )
+
+transform_results <- powerTransform(cbind(Bedroom2, Car, Distance, Landsize, BuildingArea, Price) ~ 1, data = train_data)
+# Print a summary of the transformations
+summary(transform_results)
+```
+
+$$
+\log(\text{Housing Price}) = \beta_0
++ \beta_1 \cdot \text{Type}
++ \beta_2 \cdot \text{Method}
++ \beta_3 \cdot \text{Distance}^{1/4} \\
++ \beta_4 \cdot \text{Bedroom}^{0.72}
++ \beta_5 \cdot \text{Bathroom}
++ \beta_6 \cdot \log(\text{Landsize}) \\
++ \beta_7 \cdot \text{Car}^{1/2}
++ \beta_8 \cdot \text{BuildingArea}^{1/3} \\
++ \beta_9 \cdot \text{Propertycount}
++ \beta_{10} \cdot \text{BuildingAge}
++ \epsilon
+$$
+
+# Transform to Model 2
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+# Apply power transformations
+train_data <- train_data %>%
+  mutate(
+    Bedroom2_trans = Bedroom2^0.72,
+    Car_trans = Car^(1/2),
+    Distance_trans = Distance^1/4,
+    Landsize_trans = log(Landsize),  # Log transformation for
+    BuildingArea_trans = BuildingArea^(1/3),
+    Price_trans = log(Price)  # Log transformation for near-zero power
+  )
+
+# Repeat for test data
+test_data <- test_data %>%
+  mutate(
+    Bedroom2_trans = Bedroom2^0.72,
+    Car_trans = Car^(1/2),
+    Distance_trans = Distance^(1/4),
+    Landsize_trans = log(Landsize),
+    BuildingArea_trans = BuildingArea^(1/3),
+    Price_trans = log(Price)
+  )
+
+model_2 <- lm(Price_trans ~ Type + Method + Distance_trans + Bedroom2_trans +
+                          Bathroom + Landsize_trans + Car_trans + BuildingArea_trans +
+                          Propertycount + BuildingAge, data = train_data)
+summary(model_2)
+
+# Extract coefficients, t-values, and p-values
+model_2_summary <- summary(model_2)
+coefficients_df <- as.data.frame(model_2_summary$coefficients)
+coefficients_table <- coefficients_df[, c("Estimate", "t value", "Pr(>|t|)")]
+
+# Rename columns for clarity
+colnames(coefficients_table) <- c("Coefficient Estimate", "t-value", "p-value")
+
+# Add row names (variable names) as a column
+coefficients_table <- cbind(Variable = rownames(coefficients_table), coefficients_table)
+rownames(coefficients_table) <- NULL
+
+# Create the table using kable
+library(knitr)
+kable(coefficients_table, caption = "Model 2 Coefficients, t-values, and p-values", digits = 4)
+
+# Checked ANOVA and t-test here
+```
+
+$$
+\log(\text{Housing Price}) = \beta_0
++ \beta_1 \cdot \text{TypeU}
++ \beta_2 \cdot \text{MethodS}
++ \beta_3 \cdot \text{Distance}^{1/4} \\
++ \beta_4 \cdot \text{Bedroom}^{0.72}
++ \beta_5 \cdot \text{Bathroom}
++ \beta_6 \cdot \log(\text{Landsize}) \\
++ \beta_7 \cdot \text{Car}^{1/2}
++ \beta_8 \cdot \text{BuildingArea}^{1/3} \\
++ \beta_9 \cdot \text{Propertycount}
++ \beta_{10} \cdot \text{BuildingAge}
++ \epsilon
+$$
+
+# Transform to Model 3
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+train_data$Typeu <- ifelse(train_data$Type == "u", 1, 0)  # Create a dummy for Typeu
+train_data$MethodS <- ifelse(train_data$Method == "S", 1, 0)
+
+model_3 <- lm(Price_trans ~ Typeu + MethodS + Distance_trans + Bedroom2_trans +
+                      Bathroom + Landsize_trans + Car_trans +
+                      BuildingArea_trans + Propertycount + BuildingAge, data = train_data)
+summary(model_3)
+
+anova(model_2, model_3)
+# model_3 better, go on
+```
+
+# Check VIF
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+# Check VIF for Model 3, no need to drop, continue
+library(car)
+vif_values <- vif(model_3)
+print(vif_values)
+```
+$$
+\log(\text{Housing Price}) = \beta_0
++ \beta_1 \cdot \text{Type}
++ \beta_2 \cdot \text{Method}
++ \beta_3 \cdot \text{Distance}^{1/4} \\
++ \beta_4 \cdot \text{Bedroom}^{0.72}
++ \beta_5 \cdot \text{Bathroom}
++ \beta_6 \cdot \log(\text{Landsize}) \\
++ \beta_7 \cdot \text{Car}^{1/2}
++ \beta_8 \cdot \text{BuildingArea}^{1/3}
++ \beta_{9} \cdot \text{BuildingAge}
++ \epsilon
+$$
+
+# Create Model 4, validate compared to Model 3
+```{r}
+# Drop the least significant predicor
+model_4 <- lm(Price_trans ~ Typeu + MethodS + Distance_trans + Bedroom2_trans +
+                      Bathroom + Landsize_trans + Car_trans +
+                      BuildingArea_trans + BuildingAge, data = train_data)
+summary(model_4)
+
+# Compute Adjusted R², AIC, and BIC for Model 3
+adj_r2 <- summary(model_3)$adj.r.squared
+aic <- AIC(model_3)
+bic <- BIC(model_3)
+
+cat("Adjusted R² for Model 3:", adj_r2, "\n")
+cat("AIC for Model 3:", aic, "\n")
+cat("BIC for Model 3:", bic, "\n")
+
+# Compare with competing models
+cat("Adjusted R² for Model 4:", summary(model_4)$adj.r.squared, "\n")
+cat("AIC for Model 4:", AIC(model_4), "\n")
+cat("BIC for Model 4:", BIC(model_4), "\n")
+```
+
+```{r}
+# Define the cross-validation method
+cv_control <- trainControl(method = "cv", number = 10)
+
+# Train Model 3 using cross-validation
+cv_model_3 <- train(
+  Price_trans ~ Typeu + MethodS + Distance_trans + Bedroom2_trans +
+    Bathroom + Landsize_trans + Car_trans +
+    BuildingArea_trans + Propertycount + BuildingAge,
+  data = train_data,
+  method = "lm",
+  trControl = cv_control
+)
+
+# Display cross-validation results
+print(cv_model_3)
+
+# Extract performance metrics (e.g., RMSE)
+cat("Cross-validated RMSE for Model 3:", cv_model_3$results$RMSE, "\n")
+```
+
+```{r}
+# Initialize storage for prediction errors
+se <- NULL
+
+# Perform LOOCV
+for (i in 1:nrow(train_data)) {
+  # Create training and testing sets
+  LOOtrain <- train_data[-i, ]
+  LOOtest <- train_data[i, , drop = FALSE]  # Single observation for testing
+  
+  # Fit the model on training data (Model 3)
+  model <- lm(Price_trans ~ Typeu + MethodS + Distance_trans + Bedroom2_trans +
+                Bathroom + Landsize_trans + Car_trans +
+                BuildingArea_trans + Propertycount + BuildingAge, data = LOOtrain)
+  
+  # Make prediction on the test observation
+  fitted <- predict(model, newdata = LOOtest)
+  
+  # Compute squared prediction error
+  se_i <- (LOOtest$Price_trans - fitted)^2
+  
+  # Store the error
+  se <- c(se, se_i)
+}
+
+# Compute the mean squared error (MSE)
+mse_loocv <- mean(se)
+cat("LOOCV Mean Squared Error (MSE):", mse_loocv, "\n")
+
+```
+
+```{r}
+# Initialize storage for prediction errors
+se_model_4 <- NULL
+
+# Perform LOOCV
+for (i in 1:nrow(train_data)) {
+  # Create training and testing sets
+  LOOtrain <- train_data[-i, ]
+  LOOtest <- train_data[i, , drop = FALSE]  # Single observation for testing
+  
+  # Fit the model on training data (Model 4)
+  model <- lm(Price_trans ~ Typeu + MethodS + Distance_trans + Bedroom2_trans +
+                Bathroom + Landsize_trans + Car_trans +
+                BuildingArea_trans + BuildingAge, data = LOOtrain)
+  
+  # Make prediction on the test observation
+  fitted <- predict(model, newdata = LOOtest)
+  
+  # Compute squared prediction error
+  se_i <- (LOOtest$Price_trans - fitted)^2
+  
+  # Store the error
+  se_model_4 <- c(se_model_4, se_i)
+}
+
+# Compute the mean squared error (MSE) for Model 4
+mse_model_4 <- mean(se_model_4)
+cat("LOOCV Mean Squared Error (MSE) for Model 4:", mse_model_4, "\n")
+
+```
+
+# Check on Test Data with Model 3 and Model 4
+```{r}
+# Predict on the test data using Model 3
+test_data$Typeu <- ifelse(test_data$Type == "u", 1, 0)  # Ensure Typeu exists in test data
+test_data$MethodS <- ifelse(test_data$Method == "S", 1, 0)  # Ensure MethodS exists in test data
+
+# Predictions for Model 3
+predictions_model_3 <- predict(model_3, newdata = test_data)
+
+# Compute performance metrics for Model 3
+actual <- test_data$Price_trans
+rmse_model_3 <- sqrt(mean((predictions_model_3 - actual)^2))
+mae_model_3 <- mean(abs(predictions_model_3 - actual))
+r2_model_3 <- cor(predictions_model_3, actual)^2
+
+cat("Model 3 - Test RMSE:", rmse_model_3, "\n")
+cat("Model 3 - Test MAE:", mae_model_3, "\n")
+cat("Model 3 - Test R²:", r2_model_3, "\n")
+
+# Predictions for Model 4
+predictions_model_4 <- predict(model_4, newdata = test_data)
+
+# Compute performance metrics for Model 4
+rmse_model_4 <- sqrt(mean((predictions_model_4 - actual)^2))
+mae_model_4 <- mean(abs(predictions_model_4 - actual))
+r2_model_4 <- cor(predictions_model_4, actual)^2
+
+cat("Model 4 - Test RMSE:", rmse_model_4, "\n")
+cat("Model 4 - Test MAE:", mae_model_4, "\n")
+cat("Model 4 - Test R²:", r2_model_4, "\n")
+
+```
+
+```{r}
+# Prepare validation metrics for Model 3 and Model 4
+validation_metrics <- data.frame(
+  Metric = c("Adjusted R²", "AIC", "BIC", "LOOCV MSE", "Test Data RMSE", "Test Data MAE", "Test Data R²"),
+  Model_3 = c(
+    summary(model_3)$adj.r.squared, 
+    AIC(model_3), 
+    BIC(model_3), 
+    mse_loocv, 
+    rmse_model_3, 
+    mae_model_3, 
+    r2_model_3
+  ),
+  Model_4 = c(
+    summary(model_4)$adj.r.squared, 
+    AIC(model_4), 
+    BIC(model_4), 
+    mse_model_4, 
+    rmse_model_4, 
+    mae_model_4, 
+    r2_model_4
+  )
+)
+
+# Format and display the table
+library(kableExtra)
+validation_metrics %>%
+  kable(
+    format = "latex", 
+    caption = "Comparison of Validation Metrics for Model 3 and Model 4",
+    col.names = c("Metric", "Model 3", "Model 4"),
+    digits = 4
+  ) %>%
+  kable_styling(latex_options = c("hold_position", "striped", "scale_down"))
+
+```
+
+
+# Model 3 wins! Identify problematic observations!
+```{r}
+# Compute leverage values
+leverage <- hatvalues(model_3)
+
+# Define a cutoff for high leverage points
+n <- nrow(train_data)  # Number of observations
+p <- length(coefficients(model_3))  # Number of predictors (including intercept)
+cutoff_leverage <- 2 * p / n
+
+# Identify high leverage points
+high_leverage <- which(leverage > cutoff_leverage)
+cat("High leverage points:", high_leverage, "\n")
+
+# Compute standardized residuals
+standardized_residuals <- rstandard(model_3)
+
+# Define a cutoff for outliers
+cutoff_residuals <- 2  # Common cutoff for standardized residuals
+
+# Identify outliers
+outliers <- which(abs(standardized_residuals) > cutoff_residuals)
+cat("Outlier points:", outliers, "\n")
+
+# Compute Cook's distance
+cooks_d <- cooks.distance(model_3)
+
+# Define a cutoff for Cook's distance
+cutoff_cooks <- qf(0.5, p, n - p)  # Approximation for identifying influential points
+
+# Identify influential observations
+influential_cooks <- which(cooks_d > cutoff_cooks)
+cat("Influential points (Cook's Distance):", influential_cooks, "\n")
+
+# Compute DFFITS
+dffits_values <- dffits(model_3)
+
+# Define a cutoff for DFFITS
+cutoff_dffits <- 2 * sqrt(p / n)
+
+# Identify influential observations
+influential_dffits <- which(abs(dffits_values) > cutoff_dffits)
+cat("Influential points (DFFITS):", influential_dffits, "\n")
+
+# Compute DFBetas
+dfbetas_values <- dfbetas(model_3)
+
+# Define a cutoff for DFBetas
+cutoff_dfbetas <- 2 / sqrt(n)
+
+# Identify influential observations for each coefficient
+influential_dfbetas <- apply(dfbetas_values, 2, function(x) which(abs(x) > cutoff_dfbetas))
+
+# Print influential points for each coefficient
+cat("Influential points (DFBetas):\n")
+for (coef in names(influential_dfbetas)) {
+  cat(coef, ":", influential_dfbetas[[coef]], "\n")
+}
+
+```
+
+
+```{r}
+# Compute leverage values
+leverage <- hatvalues(model_3)
+
+# Define a cutoff for high leverage points
+n <- nrow(train_data)  # Number of observations
+p <- length(coefficients(model_3))  # Number of predictors (including intercept)
+cutoff_leverage <- 2 * p / n
+
+# Identify high leverage points
+high_leverage <- which(leverage > cutoff_leverage)
+num_high_leverage <- length(high_leverage)
+prop_high_leverage <- num_high_leverage / n
+cat("High leverage points:", num_high_leverage, "(", round(100 * prop_high_leverage, 2), "% of dataset)\n")
+
+# Compute standardized residuals
+standardized_residuals <- rstandard(model_3)
+
+# Define a cutoff for outliers
+cutoff_residuals <- 2  # Common cutoff for standardized residuals
+
+# Identify outliers
+outliers <- which(abs(standardized_residuals) > cutoff_residuals)
+num_outliers <- length(outliers)
+prop_outliers <- num_outliers / n
+cat("Outlier points:", num_outliers, "(", round(100 * prop_outliers, 2), "% of dataset)\n")
+
+# Compute Cook's distance
+cooks_d <- cooks.distance(model_3)
+
+# Define a cutoff for Cook's distance
+cutoff_cooks <- qf(0.5, p, n - p)  # Approximation for identifying influential points
+
+# Identify influential observations
+influential_cooks <- which(cooks_d > cutoff_cooks)
+num_influential_cooks <- length(influential_cooks)
+prop_influential_cooks <- num_influential_cooks / n
+cat("Influential points (Cook's Distance):", num_influential_cooks, "(", round(100 * prop_influential_cooks, 2), "% of dataset)\n")
+
+# Compute DFFITS
+dffits_values <- dffits(model_3)
+
+# Define a cutoff for DFFITS
+cutoff_dffits <- 2 * sqrt(p / n)
+
+# Identify influential observations
+influential_dffits <- which(abs(dffits_values) > cutoff_dffits)
+num_influential_dffits <- length(influential_dffits)
+prop_influential_dffits <- num_influential_dffits / n
+cat("Influential points (DFFITS):", num_influential_dffits, "(", round(100 * prop_influential_dffits, 2), "% of dataset)\n")
+
+# Compute DFBetas
+dfbetas_values <- dfbetas(model_3)
+
+# Define a cutoff for DFBetas
+cutoff_dfbetas <- 2 / sqrt(n)
+
+# Identify influential observations for each coefficient
+influential_dfbetas <- apply(dfbetas_values, 2, function(x) which(abs(x) > cutoff_dfbetas))
+
+# Count unique influential points across all coefficients
+unique_influential_dfbetas <- unique(unlist(influential_dfbetas))
+num_influential_dfbetas <- length(unique_influential_dfbetas)
+prop_influential_dfbetas <- num_influential_dfbetas / n
+
+# Print results for DFBetas
+cat("Influential points (DFBetas):", num_influential_dfbetas, "(", round(100 * prop_influential_dfbetas, 2), "% of dataset)\n")
+```
+
+```{r}
+# Prepare the data for the table
+influential_points <- data.frame(
+  Metric = c("High Leverage Points", 
+             "Outlier Points", 
+             "Influential Points (Cook's Distance)"),
+  Count = c(num_high_leverage, 
+            num_outliers, 
+            num_influential_cooks),
+  Proportion = c(
+    paste0(round(100 * prop_high_leverage, 2), "%"),
+    paste0(round(100 * prop_outliers, 2), "%"),
+    paste0(round(100 * prop_influential_cooks, 2), "%")
+  )
+)
+
+# Create the table using kable
+library(knitr)
+kable(
+  influential_points,
+  col.names = c("Metric", "Count", "Proportion"),
+  caption = "Summary of Influential Points Analysis for Model 3"
+)
+# 666
+#888
+#999
+
+
+
+
+
+
+
+
+
+
+
+
+```
+
+
+```{r}
+# Fit Model 3
+model_3 <- lm(Price_trans ~ Typeu + MethodS + Distance_trans + Bedroom2_trans +
+                Bathroom + Landsize_trans + Car_trans +
+                BuildingArea_trans + Propertycount + BuildingAge, data = train_data)
+
+# Extract residuals and fitted values from the model
+y_value <- resid(model_3)
+x_value <- fitted(model_3)
+
+# Set up plotting layout
+par(mfrow = c(2, 2)) 
+
+# Plot Residuals vs Fitted Values
+plot(x = x_value, y = y_value, main = "Residual vs Fitted", xlab = "Fitted", ylab = "Residuals")
+abline(h = 0, col = "red", lty = 2)
+
+# Residual plots for numeric predictors
+plot(x = train_data$Bedroom2_trans, y = y_value, main = "Residual vs Bedroom2", xlab = "Transformed Bedroom2", ylab = "Residual")
+abline(h = 0, col = "red", lty = 2)
+
+plot(x = train_data$Bathroom, y = y_value, main = "Residual vs Bathroom", xlab = "Bathroom", ylab = "Residual")
+abline(h = 0, col = "red", lty = 2)
+
+plot(x = train_data$Distance_trans, y = y_value, main = "Residual vs Distance", xlab = "Transformed Distance", ylab = "Residual")
+abline(h = 0, col = "red", lty = 2)
+
+plot(x = train_data$Landsize_trans, y = y_value, main = "Residual vs Landsize", xlab = "Log Landsize", ylab = "Residual")
+abline(h = 0, col = "red", lty = 2)
+
+plot(x = train_data$Car_trans, y = y_value, main = "Residual vs Car", xlab = "Square Root of Car", ylab = "Residual")
+abline(h = 0, col = "red", lty = 2)
+
+plot(x = train_data$BuildingArea_trans, y = y_value, main = "Residual vs BuildingArea", xlab = "Cube Root of BuildingArea", ylab = "Residual")
+abline(h = 0, col = "red", lty = 2)
+
+plot(x = train_data$Propertycount, y = y_value, main = "Residual vs Propertycount", xlab = "Propertycount", ylab = "Residual")
+abline(h = 0, col = "red", lty = 2)
+
+plot(x = train_data$BuildingAge, y = y_value, main = "Residual vs BuildingAge", xlab = "BuildingAge", ylab = "Residual")
+abline(h = 0, col = "red", lty = 2)
+
+# Residual plot for categorical predictors using boxplots
+boxplot(y_value ~ train_data$Typeu, main = "Residuals vs Typeu", xlab = "Typeu (Dummy)", ylab = "Residuals", col = "lightblue")
+boxplot(y_value ~ train_data$MethodS, main = "Residuals vs MethodS", xlab = "MethodS (Dummy)", ylab = "Residuals", col = "lightgreen")
+
+# Reset layout to default
+par(mfrow = c(1,1))
+
+# Q-Q Plot for normality of residuals
+qqnorm(y_value, main = "Normal Q-Q Plot")
+qqline(y_value)
+
+# Plotting the Response vs Fitted values to check additional conditions
+plot(x = x_value, y = train_data$Price_trans, main = "Response vs Fitted",
+     xlab = "Fitted Values", ylab = "Log(Price)")
+abline(a = 0, b = 1, lty = 2, col = "red")
+
+# Reset plotting to single plots for pairwise scatter plot
+pairs(train_data[, c("Bedroom2_trans", "Bathroom", "Distance_trans", "Landsize_trans", 
+                     "Car_trans", "BuildingArea_trans", "Propertycount", "BuildingAge")],
+      main = "Pairwise Plots of Numeric Predictors (Transformed)",
+      col = "black")
+```
+
+```{r}
+# Prepare the data for the table
+influential_points <- data.frame(
+  Metric = c("High Leverage Points", 
+             "Outlier Points", 
+             "Influential Points (Cook's Distance)"),
+  Count = c(num_high_leverage, 
+            num_outliers, 
+            num_influential_cooks),
+  Proportion = c(
+    paste0(round(100 * prop_high_leverage, 2), "%"),
+    paste0(round(100 * prop_outliers, 2), "%"),
+    paste0(round(100 * prop_influential_cooks, 2), "%")
+  )
+)
+
+# Create the table using kable
+library(knitr)
+kable(
+  influential_points,
+  col.names = c("Metric", "Count", "Proportion"),
+  caption = "Summary of Influential Points Analysis for Model 3"
+)
+```
+
+```{r}
+# Load required library
+library(knitr)  # For kable
+
+# Get the summary of the model
+model_3_summary <- summary(model_3)
+
+# Extract coefficients from the summary
+coefficients_table <- as.data.frame(model_3_summary$coefficients)
+
+# Add row names (predictor names) as a column
+coefficients_table <- cbind(Predictor = rownames(coefficients_table), coefficients_table)
+
+# Generate the table using kable
+kable(
+  coefficients_table,
+  col.names = c("Predictor", "Estimate", "Std. Error", "t-value", "p-value"),
+  caption = "Summary of Model 3 Regression Coefficients"
+)
+
+```
+
